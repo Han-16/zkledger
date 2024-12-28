@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"runtime"
 )
 
 var remote = flag.Bool("remote", false, "Run remotely (not localhost)")
@@ -24,7 +25,7 @@ var skipCopying = flag.Bool("skipCopy", false, "Skip copying files to remote ser
 var parallelizeNotify = flag.Bool("pn", true, "Send notifications in parallel")
 var parallelizeVerify = flag.Bool("pv", true, "Parallelize verification")
 var rpOutside = flag.Bool("rp", true, "Generate 0 Range Proofs outside of lock")
-var ntxn = flag.Int("ntxn", 100, "Number of transactions in simple experiment")
+var ntxn = flag.Int("ntxn", 512, "Number of transactions in simple experiment")
 var reduce = flag.Bool("re", false, "Reduce size of txns")
 var waitAppend = flag.Bool("wa", true, "Wait for AppendTxn to return before returning from CreateEncryptedTransaction")
 var waitNotify = flag.Bool("wn", true, "Wait for ledger to notify everyone before releasing lock")
@@ -37,6 +38,7 @@ var debugString string
 var sshName string
 var scpName string
 var binaries []string = []string{"apl-bank", "apl-ledger", "apl-auditor"}
+var maxThreads = flag.Int("threads", runtime.NumCPU(), "Max number of OS threads")
 
 func (h *hostnames) String() string {
 	return fmt.Sprint(*h)
@@ -108,13 +110,13 @@ func test_simple(testName string, num_txn int, nb int, nc int, remote bool, ac *
 	// once we get the tally, begin auditing
 	<-ae.auditorStatus
 
-	log.Println("> Killing programs")
-	ae.shutdown()
 	var total_th float64
 	for i := 0; i < len(ae.throughput); i++ {
 		total_th += ae.throughput[i]
 	}
-	fmt.Printf(">>> %v/%v transacting %v ntxn per bank. Total throughput: %v, Avg latency: %v, Auditing time: %v, stddev: %v, stderr: %v\n", nc, nb, num_txn, total_th, ae.latency[0], ae.auditing, ae.stddev, ae.stderr)
+	log.Printf(">>> %v/%v transacting %v ntxn per bank. Total throughput: %v, Avg latency: %v, Auditing time: %v, stddev: %v, stderr: %v\n", nc, nb, num_txn, total_th, ae.latency[0], ae.auditing, ae.stddev, ae.stderr)
+	log.Println("> Killing programs")
+	ae.shutdown()
 }
 
 // runs test_simple many times
@@ -145,6 +147,10 @@ func test_step(testName string,
 
 func main() {
 	flag.Parse()
+	runtime.GOMAXPROCS(*maxThreads)
+    log.Printf("GOMAXPROCS set to: %d\n", runtime.GOMAXPROCS(0))
+
+
 	ac := &APLConfig{
 		numBanks:        *numBanks,
 		remote:          *remote,

@@ -12,7 +12,7 @@ import (
 )
 
 var num = flag.Int("num", 2, "num banks")
-var basePort = flag.Int("port", 7000, "Base port")
+var basePort = flag.Int("port", 8000, "Base port")
 var auditorHostname = flag.String("ah", "localhost", "auditor hostname")
 
 type hostnames []string

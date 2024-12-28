@@ -17,12 +17,13 @@ import (
 	"strings"
 
 	"github.com/mit-dci/zkledger"
+	"runtime"
 )
 
 ///////// PARAMETERS
 var numBanks = flag.Int("num", 2, "num banks")
 var curBankID = flag.Int("id", 0, "Bank id")
-var basePort = flag.Int("port", 7000, "Base port")
+var basePort = flag.Int("port", 8000, "Base port")
 var hostname = flag.String("hostname", "localhost", "host")
 var ledgerHostname = flag.String("lh", "localhost", "ledger hostname")
 var ntxn = flag.Int("ntxn", 5, "number of transactions")
@@ -35,6 +36,11 @@ var pinterval = flag.Int("pinterval", 60, "How many seconds to print progress")
 type hostnames []string
 
 var bankHostnames hostnames
+
+func printThreadInfo() {
+	log.Printf("Number of Goroutines: %d\n", runtime.NumGoroutine())
+	log.Printf("GOMAXPROCS: %d\n", runtime.GOMAXPROCS(0))          
+}
 
 func (h *hostnames) String() string {
 	return fmt.Sprint(*h)
@@ -109,6 +115,8 @@ func SavePerformanceResults(p Performance) {
 
 func main() {
 	flag.Parse()
+	log.Println("========================= [Bank.go] main() =========================\n")
+	printThreadInfo()
 	if len(bankHostnames) != *numBanks {
 		fmt.Printf("[%v] hostnames %v\n", *curBankID, bankHostnames)
 		log.Fatal("Bank: Hostnames given should have same length as number of banks")

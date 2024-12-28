@@ -1,0 +1,4 @@
+github.com/mit-dci/zkledger v0.0.0-20190308173444-a7f074c7e62f h1:235oxGeowUiFXfKaeltmkylz1q70/Lpy4l0hXM8QhoI=
+github.com/mit-dci/zkledger v0.0.0-20190308173444-a7f074c7e62f/go.mod h1:cDMN+jqgj9ceW+4cT0LU7fqw8A1A99fCkDCR1R3e4o0=
+github.com/mit-dci/zksigma v0.0.0-20190313133734-a6a19e83b9cc h1:PEL0ufWv+QReiQYnQbC5bSDlzhwa1G/yqr7DTD18MHA=
+github.com/mit-dci/zksigma v0.0.0-20190313133734-a6a19e83b9cc/go.mod h1:h5xTiloHHHbImqJ5T2797UliBzlsFWtBbOjuoRJ1yzM=

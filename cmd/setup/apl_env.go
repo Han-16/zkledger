@@ -11,6 +11,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"runtime"
+	"path/filepath"
 )
 
 type APLEnvironment struct {
@@ -34,6 +36,11 @@ type APLEnvironment struct {
 	stderr     time.Duration
 	remote     bool
 	ac         *APLConfig
+}
+
+func printThreadInfo() {
+	log.Printf("Number of Goroutines: %d\n", runtime.NumGoroutine())
+	log.Printf("GOMAXPROCS: %d\n", runtime.GOMAXPROCS(0))          
 }
 
 func (ae *APLEnvironment) init(numBanks int, remote bool, ac *APLConfig) {
@@ -176,6 +183,7 @@ func common_args(ae *APLEnvironment) []string {
 }
 
 func (ae *APLEnvironment) start_local(ntxn int, testID string, numBanksTransacting int, auditFunction string) {
+	log.Println("> ==================================== [start_local] ====================================")
 	runLedger := "./apl-ledger"
 	runBank := "./apl-bank"
 	runAuditor := "./apl-auditor"
@@ -197,6 +205,7 @@ func (ae *APLEnvironment) start_local(ntxn int, testID string, numBanksTransacti
 	}, common_args(ae)...)
 
 	// start ledger
+	log.Println("> ==================================== [Starting Ledger] ====================================")
 	ae.Ledger = exec.Command(runLedger, largs...)
 
 	fmt.Println(ae.Ledger.Args)
@@ -212,6 +221,7 @@ func (ae *APLEnvironment) start_local(ntxn int, testID string, numBanksTransacti
 	}, common_args(ae)...)
 
 	// start auditor
+	log.Println("> ==================================== [Starting Auditor] ====================================")
 	ae.Auditor = exec.Command(runAuditor, aargs...)
 	//ae.Auditor.Stdout = os.Stdout
 	ae.Auditor.Stderr = os.Stderr
@@ -258,6 +268,8 @@ func (ae *APLEnvironment) start_local(ntxn int, testID string, numBanksTransacti
 	check(err, "Problem with auditor")
 
 	// start banks
+	log.Println("> ================================= Starting Banks in apl_env.start_local =================================")
+	printThreadInfo()
 	args := []string{
 		runBank,
 		fmt.Sprintf("-num=%d", len(ae.Banks)),
@@ -282,6 +294,7 @@ func (ae *APLEnvironment) start_local(ntxn int, testID string, numBanksTransacti
 	}, common_args(ae)...)
 
 	for i := 0; i < len(ae.Banks); i++ {
+		log.Printf("> Starting bank %d\n", i)
 		if i >= numBanksTransacting { // we've reached our quota for txing banks
 			if !(*isWindows) {
 				ae.Banks[i] = exec.Command("sh", "-c", strings.Join(args, " ")+fmt.Sprintf(" -id=%d", i)+" -noTX=true")
@@ -318,7 +331,6 @@ func (ae *APLEnvironment) start_local(ntxn int, testID string, numBanksTransacti
 				}
 				if strings.Contains(txt, "Transactions per second") {
 					tp := strings.Trim(strings.Split(txt, ":")[1], " ")
-					fmt.Println(tp)
 					tpn, err := strconv.ParseFloat(tp, 64)
 					if err != nil {
 						panic(err)
@@ -513,8 +525,23 @@ func (ae *APLEnvironment) start_remote(ntxn int, testID string, numBanksTransact
 ///////// LOCAL FUNCTIONS
 
 func build_local() {
+	execPath, err := os.Executable()
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	// 실행 파일의 디렉토리 추출
+	execDir := filepath.Dir(execPath)
+	parentDir := filepath.Dir(execDir)
+
+	fmt.Println("Executable Path:", execPath)
+	fmt.Println("Executable Directory:", execDir)
+	fmt.Println("Parent Directory:", parentDir)
 	for b := range binaries {
-		cmd := exec.Command("go", "build", fmt.Sprintf("github.com/mit-dci/zkledger/cmd/%s", binaries[b]))
+		log.Println("Building:", binaries[b])
+		// cmd := exec.Command("go", "build", fmt.Sprintf("github.com/mit-dci/zkledger/cmd/%s", binaries[b]))
+		cmd := exec.Command("go", "build", fmt.Sprintf("%s/%s", parentDir, binaries[b]))
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err := cmd.Run()

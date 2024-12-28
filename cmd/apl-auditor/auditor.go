@@ -21,7 +21,7 @@ import (
 
 ///////// PARAMETERS
 var numBanks = flag.Int("num", 2, "num banks")
-var basePort = flag.Int("port", 7000, "Base port")
+var basePort = flag.Int("port", 8000, "Base port")
 var testID = flag.String("testID", "0", "Unique identifier for this test")
 var testName = flag.String("t", "h", "Audit protocol to run for test:\n h : Herfindahl Index\n s : private sum")
 var remote = flag.Bool("r", false, "[Testing Only] Is this a remote connection?")
